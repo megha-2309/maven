@@ -1,61 +1,33 @@
-@Library('mylibrary')_
-
-
-pipeline
-{
+pipeline{
     agent any
-    stages
-    {
-        stage('Download_Master')
-        {
-            steps
-            {
-                script
-                {
-                    cicd.gitDownload("maven")
+        stages{
+            stage('ContinuousDownload'){
+                steps{
+                   git 'https://github.com/IntelliqDevops/maven.git'
                 }
             }
-        }
-        stage('Build_Master')
-        {
-            steps
-            {
-                script
-                {
-                    cicd.buildArtifact()
+            stage('ContinuosBuild'){
+                steps{
+                sh 'mvn package'
                 }
             }
-        }
-        stage('Deployment_Master')
-        {
-            steps
-            {
-                script
-                {
-                    cicd.deployTomcat("DeclarativePipelinewithSharedLibraries","172.31.31.19","myapp")
+            stage('ContinuousDeployment'){
+                steps{
+                  sh 'scp /var/lib/jenkins/workspace/DeclarativePipeline1/webapp/target/webapp.war ubuntu@172.31.2.222:/var/lib/tomcat10/webapps/testapp.war'
                 }
             }
-        }
-        stage('Testing_Master')
-        {
-            steps
-            {
-                script
-                {
-                    cicd.gitDownload("FunctionalTesting")
-                    cicd.executeSelenium("DeclarativePipelinewithSharedLibraries")
+            stage('ContinuousTesting'){
+                steps{
+                  git 'https://github.com/IntelliqDevops/FunctionalTesting.git'
+                  sh 'java -jar /var/lib/jenkins/workspace/DeclarativePipeline1/testing.jar'
                 }
             }
-        }
-        stage('Delivery_Master')
-        {
-            steps
-            {
-                script
-                {
-                    cicd.deployTomcat("DeclarativePipelinewithSharedLibraries","172.31.25.180","myprodapp")
+            stage('ContinuousDelivery'){
+                steps{
+                    sh 'scp /var/lib/jenkins/workspace/DeclarativePipeline1/webapp/target/webapp.war ubuntu@172.31.9.15:/var/lib/tomcat10/webapps/prodapp.war'
                 }
+                
             }
         }
-    }
+    
 }
